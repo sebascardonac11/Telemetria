@@ -2,11 +2,16 @@ import React, {useState} from 'react';
 import {Text, View, TextInput, StyleSheet, Button, Alert} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {CognitoUser, AuthenticationDetails} from 'amazon-cognito-identity-js';
+import {useNavigation} from '@react-navigation/native';
 
 import {cognitoPool} from '../utils/cognito-pool';
 
 export default function Login() {
-  const [dataForm, setDataForm] = useState({email: '', pass: ''});
+  const navigation = useNavigation();
+  const [dataForm, setDataForm] = useState({
+    email: 'juliancc9226@gmail.com',
+    pass: 'consentida22',
+  });
   //const [user, setUser] = useState({});
 
   const onPressLogin = () => {
@@ -21,22 +26,26 @@ export default function Login() {
     });
     user.authenticateUser(authDetails, {
       onSuccess: async res => {
-        const token = res?.refreshToken?.token;
+        console.log('res ', res);
+        /* const token = res?.refreshToken?.token;
         await AsyncStorage.setItem('REFRESH_TOKEN', token);
 
         setTimeout(() => {
           navigation.navigate('main');
-        }, 350);
+        }, 350); */
+
+        navigation.navigate('Motorcycles');
       },
       onFailure: err => {
-        switch (err.name) {
+        console.log('err ', err);
+        /* switch (err.name) {
           case 'UserNotConfirmedException':
             return alert(err.name);
           case 'NotAuthorizedException':
             return alert(err.name);
           default:
             return alert(err);
-        }
+        } */
       },
     });
   };
@@ -63,9 +72,8 @@ export default function Login() {
               return alert('error ' + err.message);
           }
         }
-        Alert.alert(General.Success, Auth.ConfirmEmail, [
-          {text: 'OK', onPress: () => navigation.navigate('login')},
-        ]);
+        alert('LISTO CREADO', data);
+        //navigation.navigate('login')
       },
     );
   };
