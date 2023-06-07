@@ -1,3 +1,5 @@
+#include <ESP8266WiFi.h>
+
 /**
 * This function connect to wifi.
 */
@@ -15,7 +17,8 @@ bool wifiConnect(String ssid, String password) {
   Serial.print(" ");
   byte cont = 0;
   byte led = 0;
-  byte max_intentos = 20;
+  byte max_intentos = 10;
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED and cont < max_intentos) {  //Cuenta hasta 50 si no se puede conectar lo cancela
     if (led == 0) {
@@ -38,7 +41,6 @@ bool wifiConnect(String ssid, String password) {
     Serial.print("macAdress: ");
     Serial.println(WiFi.macAddress());
     Serial.println("*********************************************");
-
     digitalWrite(ledWifi, LOW);  //ON
     digitalWrite(redLed, HIGH);  //OFF
     return true;
@@ -46,4 +48,15 @@ bool wifiConnect(String ssid, String password) {
     digitalWrite(redLed, LOW);  //OFF
     return false;
   }
+}
+/**
+*
+*/
+String getInfoConnect(){
+  String res = "{";
+    res +=   "\"localIp\":\""+ WiFi.localIP().toString()+"\"";
+    res += ",\"macAdress\":\"" + WiFi.macAddress() + "\"";
+    res += ",\"SSID\":\"" + WiFi.SSID() + "\"";
+    res += "}";
+    return res;
 }

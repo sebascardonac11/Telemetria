@@ -1,0 +1,374 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: qa
+  CognitoGroupName:
+    Type: String
+    Default: telemetryGroup
+  BucketName:
+    Type: String
+    Default: telemetryqa
+  DynamoDBTableName:
+    Type: String
+    Default: telemetry
+  APIName:
+    Type: String
+    Default: API-telemtry
+  APIDesc:
+    Type: String
+    Default: Api disenada para los servicios de telemetria.
+Resources:
+################## FRONT & BASE ##################
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Ref CognitoGroupName
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+      UsernameAttributes:
+        - email
+      Schema:
+        - AttributeDataType: String
+          Name: email
+          Required: true
+        - AttributeDataType: String
+          Name: given_name
+          Required: false
+        - AttributeDataType: String
+          Name: last_name
+          Required: false
+        - AttributeDataType: String
+          Name: phone_number
+          Required: false
+  UserPoolDomain: 
+    Type: AWS::Cognito::UserPoolDomain 
+    Properties:
+      UserPoolId: !Ref CognitoUserPool 
+      Domain: !Ref BucketName
+  CognitoUserPoolClient:
+    DependsOn:
+    - CognitoUserPool
+    - CognitoGoogle
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      AutoVerifiedAttributes:
+        - email
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_LINK
+      CallbackURLs:
+        - 'https://d3ri3uhvzvztpt.cloudfront.net/login'
+      UserPoolId: !Ref CognitoUserPool
+      ClientName: 'photoEventCognitoClient'
+      GenerateSecret: false
+      PreventUserExistenceErrors: ENABLED
+      DefaultRedirectURI: 
+        'https://d3ri3uhvzvztpt.cloudfront.net/login'
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - implicit
+      AllowedOAuthScopes:
+        - email
+        - openid
+      SupportedIdentityProviders:
+        - "Google"
+  CognitoGroupClient:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties: 
+      Description: Rol para los clientes de la app.
+      GroupName: client
+      UserPoolId: !Ref CognitoUserPool
+  CognitoGroupAdmin:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties: 
+      Description: Rol para los administradores de la app.
+      GroupName: admin
+      UserPoolId: !Ref CognitoUserPool
+  LambdaAddClientGroup:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Timeout: 10
+      Code:
+        ZipFile: |
+          var AWS = require('aws-sdk');
+          exports.handler = (event, context, callback) => {
+          var cognitoIdentityServiceProvider = new AWS.CognitoIdentityServiceProvider();
+          var params = {
+              GroupName: 'client', //your confirmed user gets added to this group
+              UserPoolId: event.userPoolId,  
+              Username: event.userName
+            };
+          cognitoIdentityServiceProvider.adminAddUserToGroup(params, function(err, data) {
+            if (err) {
+                callback(err)
+            }
+            callback(null, event);
+            });
+          };
+      FunctionName: 'add-client-group-to-cognito'
+      Handler: index.handler
+      Runtime: nodejs16.x
+      Role: !GetAtt IAMRole.Arn
+    DependsOn:
+      - IAMRole
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 9dec56b7-939f-4bc7-9200-47da6127bfe1
+  BucketS3:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName : !Ref BucketName
+      #NotificationConfiguration:
+      #  LambdaConfigurations:
+      #  - Event: 's3:ObjectCreated:*'
+      #  - Filter: 
+      #  - Function: !GetAtt LambdaFunctionPhoto.Arn
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    DependsOn:
+      - BucketS3
+      - CloudFrontOriginIdentity
+    Properties:
+      Bucket: !Ref BucketName
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginIdentity}'
+            Action: 's3:GetObject'
+            Resource: 
+              - !Sub "arn:aws:s3:::${BucketName}/*"
+  CloudFrontOriginIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: 'origin identity'
+  CloudFront:
+    Type: AWS::CloudFront::Distribution
+    DependsOn:
+      - BucketS3   
+    Properties:
+      DistributionConfig:
+        Enabled: 'true'
+        Comment: 'Portal web de la solucion'
+        Origins:
+          - DomainName: !GetAtt BucketS3.DomainName
+            OriginPath: '/front'
+            Id: !Ref BucketS3
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginIdentity}'
+        DefaultRootObject: index.html
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: '/index.html'
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: '/index.html'
+        DefaultCacheBehavior:
+          AllowedMethods:
+          - GET
+          - HEAD
+          Compress: true
+          TargetOriginId: !Ref BucketS3
+          ForwardedValues:
+            QueryString: 'false'
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https    
+      Tags:
+        - Key: telemetry
+          Value: telemetry
+  DynamoDBTable:
+    Type: 'AWS::DynamoDB::Table'
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName:
+        Ref: DynamoDBTableName
+      ProvisionedThroughput:
+        ReadCapacityUnits: '5'
+        WriteCapacityUnits: '5'
+      AttributeDefinitions:
+        - AttributeName: mainkey
+          AttributeType: S 
+        - AttributeName: mainsort
+          AttributeType: S    
+        - AttributeName: entity
+          AttributeType: S         
+      KeySchema:
+        - AttributeName: mainkey
+          KeyType: HASH
+        - AttributeName: mainsort
+          KeyType : RANGE
+      GlobalSecondaryIndexes:
+        - 
+          IndexName: "EntittGSI" 
+          KeySchema:
+            - AttributeName: entity
+              KeyType: HASH
+            - AttributeName: mainsort
+              KeyType : RANGE
+          Projection:
+            ProjectionType: "ALL"
+          ProvisionedThroughput:
+            ReadCapacityUnits: '5'
+            WriteCapacityUnits: '5'
+      Tags:
+        - Key: Proyect
+          Value: PhotoEvent
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 25e3f28b-2aaa-4af9-a1bc-37afdf426f52
+  APIGatewayRestAPI:
+    Type: 'AWS::ApiGateway::RestApi'
+    DependsOn:
+      - IAMRole 
+    Properties:
+      Name:
+        Ref: APIName
+      Description:
+        Ref: APIDesc
+      Parameters:
+        endpointConfigurationTypes: REGIONAL
+      BinaryMediaTypes:
+        - image/jpeg
+        - multipart/form-data
+  APIGatewayAuthorizer:
+    Type: 'AWS::ApiGateway::Authorizer'
+    Properties:
+      IdentitySource: method.request.header.Authorization
+      Name: CognitoAuthorizer
+      Type: COGNITO_USER_POOLS
+      ProviderARNs:
+        - !GetAtt CognitoUserPool.Arn
+      RestApiId: !Ref APIGatewayRestAPI
+    DependsOn:
+      - APIGatewayRestAPI
+      - CognitoUserPool
+  Amplify:
+    Type: AWS::Amplify::App
+    Properties:
+      Name: 'PhotoEvent'
+      Description: 'Amplifly para el dev de login social'
+
+################## SHARE ################
+  IAMRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: Policy_api-lambda
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:BatchGetItem'
+                  - 'dynamodb:BatchWriteItem'
+                  - 'dynamodb:TagResource'
+                  - 'dynamodb:UntagResource'
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:DeleteItem'
+                  - 'dynamodb:GetItem'
+                  - 'dynamodb:Scan'
+                  - 'dynamodb:Query'
+                  - 'dynamodb:UpdateItem'
+                  - 'rekognition:*'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogStream'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 's3:PutObject'
+                  - 's3:GetObject'
+                  - 's3:PutObjectTagging'
+                  - 's3:GetObjectTagging'
+                Resource: 
+                  - !Sub "arn:aws:s3:::${BucketName}/*"
+        - PolicyName: Policy_api-S3
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:  
+              - Effect: Allow
+                Action:
+                  - 's3:PutObject'
+                  - 's3:GetObject'
+                  - 's3:ListBucket'
+                  - 's3:PutObjectTagging'
+                Resource: 
+                  - !Sub "arn:aws:s3:::${BucketName}/*"
+                  - !Sub "arn:aws:s3:::${BucketName}"
+Outputs:
+  PhotoEventEviroment:
+    Description: Enviroment of project.
+    Value: 'dev'
+    Export:
+      Name: PhotoEvent-Enviroment 
+  ApiGwRestApiID:
+    Description: ApiRest of project.
+    Value: !Ref APIGatewayRestAPI
+    Export:
+      Name: PhotoEvent-ApiGwRestApiID
+  ApiGwRestApiResource:
+    Description: ApiRest Resource of project.
+    Value:  !GetAtt 
+        - APIGatewayRestAPI
+        - RootResourceId
+    Export:
+      Name: PhotoEvent-ApiGwRestApiResource
+  APIGatewayAuthorizer:
+    Description: Authorizer to all apis.
+    Value: !Ref APIGatewayAuthorizer
+    Export:
+      Name: PhotoEvent-APIGwAuthorizer  
+  ApiResorceURL: 
+    Description: This is the URL of the resorce of Api.
+    Value: !Sub "https://${APIGatewayRestAPI}.execute-api.${AWS::Region}.amazonaws.com/${EnvironmentName}/"
+    Export:
+      Name: PhotoEvent-ApiResorceURL
+  BucketS3ARL:
+    Description: Arn de bucketS3
+    Value: !GetAtt BucketS3.Arn
+    Export:
+      Name: PhotoEvent-BucketS3ARL
+  IAMRoleName:
+    Description: IAM Role Arn
+    Value: !GetAtt IAMRole.Arn
+    Export:
+      Name: PhotoEvent-IAMRoleName
+  UserPoolId:
+    Description: User pool ID
+    Value: !Ref CognitoUserPool
+    Export:
+      Name: PhotoEvent-UserPoolId
+  CognitoClientId:
+    Description: User pool 
+    Value: !Ref CognitoUserPoolClient
+    Export:
+      Name: PhotoEvent-CognitoClientId
+  Domain:
+    Description: URL del cloudFront Distribution
+    Value: !GetAtt CloudFront.DomainName
+    Export:
+      Name: PhotoEvent-Domain
+  AmplifyID:
+    Description: ID de Amplify
+    Value: !GetAtt Amplify.AppId
+    Export:
+      Name: PhotoEvent-AmplifyID
