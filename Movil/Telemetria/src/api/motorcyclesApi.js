@@ -1,6 +1,6 @@
 import {API_HOST} from '../utils/constants';
 
-export async function getMotorcyclesApi(query) {
+export async function getMotorcyclesApi() {
   try {
     const url = `${API_HOST}/`;
     const response = await fetch(url);

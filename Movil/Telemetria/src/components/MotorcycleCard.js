@@ -11,6 +11,7 @@ export default function MotorcycleCard(props) {
   const {motorcycle} = props;
   const selectMotorcycle = () => {
     console.log('motorcycle  ', motorcycle);
+    alert(motorcycle.id);
   };
   return (
     <TouchableWithoutFeedback onPress={selectMotorcycle}>

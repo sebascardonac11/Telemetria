@@ -11,14 +11,10 @@ import {getMotorcyclesApi} from '../api/motorcyclesApi';
 export default function Motorcycles() {
   const [motorcycles, setMotorcycles] = useState([]);
   console.log('renderizando');
-  /* useEffect(() => {
+  useEffect(() => {
     (async () => {
       await loadMotorcycles();
     })();
-  }, []); */
-
-  useEffect(() => {
-    loadMotorcycles();
   }, []);
 
   const loadMotorcycles = async () => {
