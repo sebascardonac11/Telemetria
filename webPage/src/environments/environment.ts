@@ -40,3 +40,12 @@ export const environment = {
         referenceCode: "PURCHASE-123456",
       }
 };
+
+
+/**
+ * https://photoevent   .auth.us-west-2.amazoncognito.com/login?response_type=code&client_id=vm1sp2u6gc1guv9h2k43vd34&redirect_uri=https://d3ri3uhvzvztpt.cloudfront.net/login
+ * https://photoeventpro.auth.us-east-1.amazoncognito.com/login?response_type=code&client_id=fcvmvv7423fitvtc71grach54
+ * 
+
+            
+*/
