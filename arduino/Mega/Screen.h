@@ -142,7 +142,7 @@ public:
 
     display.setCursor(70, 40);
     display.print(speed);
-    display.print(" km/h");
+    display.print("km/h");
 
     display.drawLine(0, 50, display.width()-1,  50, WHITE);
     display.setCursor(0, 55);

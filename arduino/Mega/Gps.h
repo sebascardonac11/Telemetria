@@ -11,8 +11,9 @@ private:
   SoftwareSerial ss;
   TinyGPS gps;
   float flat, flon, speed;
-  int sat = -1;
-  char date[32];
+  int sat = -2;
+  char date[32]="00000000000000000000000000000000";
+  String date2;
 
   void init() {
     this->ss.begin(9600);
@@ -33,10 +34,7 @@ public:
   * This function connect the device with the satellites and asign the values of the class.
   */
   int readGps() {
-
     bool newData = false;
-
-
     unsigned long chars;
     unsigned short sentences, failed;
     // For one second we parse GPS data and report some key values
@@ -50,8 +48,8 @@ public:
     }
     gps.stats(&chars, &sentences, &failed);
     //Serial.println(chars);
-    if (chars != 0) {
-      sat = -2;
+    if (chars == 0) {
+      sat = -1;
     }
     if (newData) {
       unsigned long age;
@@ -63,7 +61,9 @@ public:
       this->speed = gps.f_speed_kmph();
       gps.crack_datetime(&year, &month, &day, &hour, &minute, &second, &hundredths, &age);
       sprintf(this->date, "%02d/%02d/%02d %02d:%02d:%02d   ",
-              month, day, year, hour, minute, second);
+              month, day, year, hour, minute, second); 
+              Serial.println(this->date);
+              Serial.print(this->date[0]);
     }
     return sat;
   }
@@ -71,8 +71,8 @@ public:
   float getLatitude() {
     return this->flat;
   }
-  char getDate() {
-    return this->date;
+  String getDate() {
+    return this->date2;
   }
   float getLongitude() {
     return this->flon;
