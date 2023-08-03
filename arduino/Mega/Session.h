@@ -5,7 +5,7 @@ private:
   char fecha[20];
   String trackName;
   int lap = 0;
-  String Time = "0:00:000";
+  String Time = "0:00:00";
   int minutos = 0;
 
 public:

@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <TimeLib.h>
 #include "Test.h"
-#include "Screen.h"
+
 
 float valMin = 50.0;
 float valMax = 1024.0;
@@ -22,7 +22,7 @@ String getLocation();
 
 void beginSD();
 test t;
-Screen screen;
+//Screen screen;
 void setup() {
 
 //  test t = new test();
@@ -32,10 +32,10 @@ void setup() {
   Serial.begin(115200);
 
   beginScreen();
-  beginGps();
-  beginSD();
+  //beginGps();
+  //beginSD();
   setTime(12, 39, 50, 18, 07, 2023);
-  Imilisegundos = millis();
+ // Imilisegundos = millis();
 }
 
 void loop() {
@@ -48,7 +48,7 @@ void loop() {
   res += "}";
   //Serial.println(res);
 */
-  printTime(cronometro(Imilisegundos));
+ // printTime(cronometro(Imilisegundos));
   printSuspension(getLocation());
 
   printScreen();
