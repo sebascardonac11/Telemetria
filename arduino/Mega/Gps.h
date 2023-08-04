@@ -38,14 +38,14 @@ public:
     unsigned long chars;
     unsigned short sentences, failed;
     // For one second we parse GPS data and report some key values
-    for (unsigned long start = millis(); millis() - start < 100;) {
+    //for (unsigned long start = millis(); millis() - start < 100;) {
       while (ss.available()) {
         char c = ss.read();
         // Serial.write(c); // uncomment this line if you want to see the GPS data flowing
         if (gps.encode(c))  // Did a new valid sentence come in?
           newData = true;
       }
-    }
+    //}
     gps.stats(&chars, &sentences, &failed);
     //Serial.println(chars);
     if (chars == 0) {

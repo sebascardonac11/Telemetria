@@ -48,6 +48,7 @@ void setup() {
 }
 
 void loop() {
+  //attachInterrupt(digitalPinToInterrupt(pinTachInterrupt), countRPM, FALLING);
   int sat = gps.readGps();
   if (gps.getDistance(6.1523671, -75.6056060) < 9 && sat > 1) {
     beginLapTimer = millis();
@@ -56,21 +57,11 @@ void loop() {
   }
   session.lapTimer(millis());
 
-  //***********************Revoluciones.
 
-
-  if ((millis() - lastRPMRefresh) > 250 && (RPMpulses > 0)) {
-    Serial.print("RMPs: ");
-    Serial.println(getRPM());
-    //   RPMpulses = 0;
-    lastRPMRefresh = millis();
-  }
-
-  //***********************Revoluciones.
   if (digitalRead(next) == HIGH) {
     if ((millis() - lastDebounceTime) > 500) {
       option++;
-      if (option > 2)
+      if (option > 3)
         option = 0;
       Serial.print("option = ");
       Serial.println(option);
@@ -107,8 +98,16 @@ void loop() {
         lastScreenRefresh = millis();
       }
       break;
-    case (3):  //
-      Serial.println("Opt 3");
+    case (3):  // Revolutions
+        text += " Pulsos cada 10s : ";
+        text += RPMpulses;
+        screen.printRPMS(text);
+      if ((millis() - lastRPMRefresh) > 10000 && (RPMpulses > 0)) {
+        //Serial.print("RMPs: ");
+        //Serial.println(getRPM());
+        RPMpulses = 0;
+        lastRPMRefresh = millis();
+      }
       break;
     default:
       screen.printHome(sat);
@@ -150,9 +149,10 @@ String cronometro(long Imillis) {
 //////////////////////////////////////////////////////////////////////////////////////
 
 void countRPM() {
-  //Serial.print("Entrando a contar RPMS.");
+
   RPMpulses++;
-  //Serial.println(RPMpulses);
+  Serial.print("Entrando a contar RPMS.");
+  Serial.println(RPMpulses);
 }
 
 
@@ -161,11 +161,11 @@ void countRPM() {
 /////////////////////////////////////////////////////
 
 int getRPM() {
-  byte cilindros = 1;   
-  int refreshInterval = 250;        // milisegundos refresco                                                                      // (pulsos por revolucion = 2 * cylinders / cycles)
+  byte cilindros = 1;
+  int refreshInterval = 250;                                                                  // milisegundos refresco                                                                      // (pulsos por revolucion = 2 * cylinders / cycles)
   byte tiempos = 4;                                                                           // tipo motor
   int RPM = int(RPMpulses * (60000.0 / float(refreshInterval)) * tiempos / cilindros / 2.0);  // calculate RPM
   //int RPM = int(RPMpulses * (60000.0 / float(refreshInterval)) * 1 ); // calculate RPM
-  RPMpulses = 0;             // reset pulse count to 0
+  RPMpulses = 0;  // reset pulse count to 0
   return RPM;
 }
