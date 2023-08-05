@@ -7,6 +7,9 @@
 #include "Track.h"
 #include "Session.h"
 
+//Pins
+byte txGpsPin = 10;  // Pines Para mega es (10,9), Micro (9,8)
+byte rxGpsPin = 9;
 const byte pinTachInterrupt = 2;  // Interrupt 0 (digital pin 2)
 uint8_t pinFrontlinearSuspension = A0;
 uint8_t pinRearlinearSuspension = A1;
@@ -27,6 +30,7 @@ long lastScreenRefresh = 0;
 long lastRPMRefresh = 0;
 long beginLapTimer = 0;
 int minutos = 0;
+int sat = -2;
 
 volatile int RPMpulses = 0;  //Variable que almacena los pulsos en bujía
 
@@ -45,18 +49,15 @@ void setup() {
 
   pinMode(2, INPUT_PULLUP);  // enable internal pullup for tach pin
   attachInterrupt(digitalPinToInterrupt(pinTachInterrupt), countRPM, FALLING);
+  session.lapTimer();
 }
 
 void loop() {
-  //attachInterrupt(digitalPinToInterrupt(pinTachInterrupt), countRPM, FALLING);
-  int sat = gps.readGps();
   if (gps.getDistance(6.1523671, -75.6056060) < 9 && sat > 1) {
     beginLapTimer = millis();
     minutos = 0;
-    session.addLap(millis());
+    session.addLap(beginLapTimer);  //Inicia Vuelta
   }
-  session.lapTimer(millis());
-
 
   if (digitalRead(next) == HIGH) {
     if ((millis() - lastDebounceTime) > 500) {
@@ -69,23 +70,29 @@ void loop() {
     lastDebounceTime = millis();
   }
   String text = "";
-  String date;
-  date = gps.getDate();
+  String date = "Fecha";
+
   // Menu
   switch (option) {
     case (0):  //Home
       if (sat < 0) {
-        screen.printHome(sat);
+        sat = gps.readGps();
+        date = gps.getDate();
+        Serial.println(date[0]);
+        screen.printHome(sat, date);
         break;
       }
     case (1):  //LapTimer
+      sat = gps.read
+      Gps();
       if ((millis() - lastScreenRefresh) > 500) {
         text += "Distancia: ";
         text += gps.getDistance(6.1523671, -75.6056060);
         text += "m     ";
         //screen.printLaptimer(cronometro(beginLapTimer), String(sat), gps.getSpeed(), text);
-        screen.printLaptimer(session.getTime(), String(sat), gps.getSpeed(), text);
+        screen.printLaptimer(session.getTime(), String(sat), gps.getSpeed(), String(session.getLap()), text);
         lastScreenRefresh = millis();
+        //Serial.println(session.getTime());
       }
       break;
     case (2):  // Suspention
@@ -99,9 +106,9 @@ void loop() {
       }
       break;
     case (3):  // Revolutions
-        text += " Pulsos cada 10s : ";
-        text += RPMpulses;
-        screen.printRPMS(text);
+      text += " Pulsos cada 10s : ";
+      text += RPMpulses;
+      screen.printRPMS(text);
       if ((millis() - lastRPMRefresh) > 10000 && (RPMpulses > 0)) {
         //Serial.print("RMPs: ");
         //Serial.println(getRPM());
@@ -110,7 +117,7 @@ void loop() {
       }
       break;
     default:
-      screen.printHome(sat);
+      screen.printHome(sat, date);
   }
 }
 

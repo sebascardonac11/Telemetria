@@ -29,7 +29,7 @@ public:
     display.setCursor(85, 56);
     display.println("v 1.0");
     display.display();  // Show initial text
-    delay(1000);
+    //delay(1000);
   }
   Screen()
     : display(OLED_RESET) {
@@ -98,12 +98,17 @@ public:
     display.setCursor(85, 56);
     display.println("Sebas84");
   }
-  void printHome(int sat) {
+  void printHome(int sat,String date) {
     display.clearDisplay();
     display.setTextSize(3);  // Draw 2X-scale text
     display.setTextColor(WHITE);
     display.setCursor(0, 20);
     display.println("Sebas84");
+
+    display.setTextSize(1);  // Draw 2X-scale text
+    display.setTextColor(WHITE);
+    display.setCursor(0, 0);
+    display.print(date);
 
     display.setTextSize(1);  // Draw 2X-scale text
     display.setTextColor(WHITE);
@@ -129,7 +134,7 @@ public:
    * @param time 
    * @param text 
    */
-  void printLaptimer(String time, String sat, float speed, String laps) {
+  void printLaptimer(String time, String sat, float speed, String laps, String date) {
     display.clearDisplay();
 
     display.setTextSize(3);  // Draw 2X-scale text
@@ -140,7 +145,7 @@ public:
 
 
     display.setCursor(0, 30);
-    display.print(laps);
+    display.print(date);
 
     display.setCursor(70, 40);
     display.print(speed);
@@ -151,7 +156,7 @@ public:
     display.print("Sat: ");
     display.print(sat);
     display.print("   Laps: ");
-    display.print("0");
+    display.print(laps);
     display.display();  // Show initial text
   }
 };
