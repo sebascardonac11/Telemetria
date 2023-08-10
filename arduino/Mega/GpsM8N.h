@@ -40,7 +40,7 @@ public:
     bool newData = false;
     unsigned long chars;
     // For one second we parse GPS data and report some key values
-    for (unsigned long start = millis(); millis() - start < 500;) {
+    //for (unsigned long start = millis(); millis() - start < 500;) {
       while (ss.available()) {
         char c = ss.read();
         //Serial.write(c); // uncomment this line if you want to see the GPS data flowing
@@ -52,7 +52,7 @@ public:
           }
         }
       }
-    }
+    //}
     if (gps.charsProcessed() < 10) {
       Serial.println(F("No GPS detected: check wiring."));
       sat = -1;

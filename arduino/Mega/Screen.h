@@ -183,4 +183,24 @@ public:
     display.print(laps);
     display.display();  // Show initial text
   }
+  void printLastLap(String time, int lap) {
+    display.clearDisplay();
+
+    display.setTextSize(3);  // Draw 2X-scale text
+    display.setTextColor(WHITE);
+    display.setCursor(0, 0);
+    display.print(time);
+    display.setTextSize(1);  // Draw 2X-scale text
+
+    display.setCursor(0, 55);
+    display.print("   Laps: ");
+    display.print(lap);
+
+    display.setTextSize(1);  // Draw 2X-scale text
+    display.setTextColor(WHITE);
+    display.setCursor(85, 56);
+    display.println("Sebas84");
+
+    display.display();  // Show initial text
+  }
 };

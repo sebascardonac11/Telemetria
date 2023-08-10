@@ -1,3 +1,5 @@
+#include "WString.h"
+#include "HardwareSerial.h"
 #include "Arduino.h"
 #include "Lap.h"
 
@@ -6,55 +8,55 @@ private:
   char fecha[20];
   String trackName;
   int lap = 0;
-  String Time = "0:00:00";
+
   int minutos = 0;
-  long startLap;
+  long startLap = 0;
+  long lastLap = 0;
 
 public:
   Session(String trackName) {
     this->trackName = trackName;
-    this->startLap= millis();
+    this->startLap = millis();
   }
 
   void addLap(long startLap) {
     this->lap++;
+    this->lastLap = startLap - this->startLap;
     this->startLap = startLap;
   }
   int getLap() {
     return this->lap;
   }
-  String getTime() {
-    this->lapTimer();
-    return this->Time.substring(0, 7);
+  String getLasLap() {
+    return this->printTime(this->lastLap, this->startLap);
   }
+  String getTime() {
+    return this->printTime(this->startLap, millis());
+  }
+
   /**
 
 */
-  String lapTimer() {
-    if (this->lap > 0) {
-      int segundos = 0;
-      long diff = (millis() - this->startLap);
-      int centesimos = 0;
+  String printTime(long startTime, long endTime) {
+    String Time = "0:00:00";
+    if (startTime != 0) {
 
-      segundos = (diff / 1000);
-      centesimos = (diff - (segundos * 1000));
-      segundos = segundos - (minutos * 60);
-      if (segundos >= 60) {
-        segundos = 0;
-        minutos++;
-      }
-      this->Time = (minutos);
-      this->Time += (":");
-      this->Time += (segundos);
-      this->Time += (":");
-      this->Time += String(centesimos,2);
-/*
-      Serial.print(this->Time);
-      Serial.print(".           diff ");
-      Serial.print(diff);
-      Serial.print(".           Inicial ");
-      Serial.println(this->startLap);*/
+      int centesimos = 0;
+      double diff = (endTime - startTime);
+      diff = diff / 3600000;
+      int hour = diff;
+      diff = (diff - hour  ) * 60;
+      int min = diff;
+      diff = (diff-min) * 60;
+      int sec = diff;
+      diff = (diff-sec) * 1000;
+      Time = min;
+      Time += (":");
+      Time += (sec);
+      Time += (":");
+      Time += diff;
     }
-    return (this->Time.substring(0, 7));
+
+    return (Time.substring(0, 7));
   }
 };

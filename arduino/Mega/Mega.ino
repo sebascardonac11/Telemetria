@@ -32,7 +32,6 @@ long lastDebounceTime = 0;  // the last time the button was pushed
 long lastScreenRefresh = 0;
 long lastRPMRefresh = 0;
 long beginLapTimer = 0;
-int minutos = 0;
 int sat = -2;
 
 volatile int RPMpulses = 0;  //Variable que almacena los pulsos en bujía
@@ -47,7 +46,7 @@ void setup() {
 
   screen.init();
   sd.init();
-  tracks[0] = new Track("Medellin ", 6.1523671, -75.6056060, 9);
+  tracks[0] = new Track("Medellin ", -75.6056060,6.1523671 , 9);
   tracks[1] = new Track("Manizales ", 6.1523671, -75.6056060, 9);
   tracks[2] = new Track("Tocancipa ", 6.1523671, -75.685760, 9);
   tracks[3] = new Track("Finca ", -75.685753, 5.104020, 9);
@@ -55,30 +54,27 @@ void setup() {
   beginLapTimer = millis();
   attachInterrupt(digitalPinToInterrupt(pinTachInterrupt), countRPM, FALLING);
   attachInterrupt(digitalPinToInterrupt(pinMenu), optionClick, RISING);
-  session.lapTimer();
-  //Serial.println(tracks[2]->getName());
 }
 
 
 void loop() {
-
-  if (gps.getDistance(tracks[3]->getStartLong(), tracks[3]->getStartLat()) < tracks[3]->getWidth() && 
-  sat > 1 
-  /* && gps.getSpeed() > 5.0 
-    ( millis() - lastScreenRefresh >5000 )
-  */
-  ) {
-    beginLapTimer = millis();
-    minutos = 0;
-    session.addLap(beginLapTimer);  //Inicia Vuelta
-  }
-
-  /**Clicks*/
+  /**Clicks
   if ((millis() - lastDebounceTime) > 50000) {
     option = 0;
     enter = 0;
+  }*/
+  /*Logic of sessions*/
+  if (gps.getDistance(tracks[3]->getStartLong(), tracks[3]->getStartLat()) < tracks[3]->getWidth()
+      && sat > 1
+      // && gps.getSpeed() > 5.0
+      && (millis() - beginLapTimer > 9000)) {
+    beginLapTimer = millis();
+    session.addLap(beginLapTimer);  //Inicia Vuelta
+    option = 14;
   }
-  /**Clicks*/
+
+
+  /** Menu **/
   String text = "";
   String date = "Fecha";
   int selected = option - 3;
@@ -91,8 +87,8 @@ void loop() {
         //Serial.println(date[0]);
         screen.printHome(sat, date);
         break;
-      }else{
-        option =1;
+      } else {
+        option = 1;
       }
     case (1):  //LapTimer
       sat = gps.readGps();
@@ -102,10 +98,9 @@ void loop() {
         text += "m     ";
         screen.printLaptimer(session.getTime(), String(sat), gps.getSpeed(), String(session.getLap()), text);
         lastScreenRefresh = millis();
-        //Serial.println(session.getTime());
       }
       break;
-    case (2):  //Menu Configuracion
+    /*case (2):  //Menu Configuracion
       screen.printMenu(0);
       break;
     case (3):  //Menu Suspension
@@ -159,6 +154,13 @@ void loop() {
 
       screen.printText(text);
 
+      break;*/
+    case (14):
+      sat = gps.readGps();
+      if ((millis() - beginLapTimer) > 5000) {
+        screen.printLastLap(session.getLasLap(), session.getLap());
+        option = 1;
+      }
       break;
     default:
       Serial.println("Default");
@@ -166,36 +168,6 @@ void loop() {
   }
 }
 
-
-/**
-
-*/
-String cronometro(long Imillis) {
-
-  int segundos = 0;
-  long diff = (millis() - Imillis);
-  int centesimos = 0;
-  String lapTimer = "0:00:000";
-  segundos = (diff / 1000);
-  centesimos = (diff - (segundos * 1000));
-  segundos = segundos - (minutos * 60);
-  if (segundos >= 60) {
-    segundos = 0;
-    minutos++;
-  }
-  lapTimer = (minutos);
-  lapTimer += (":");
-  lapTimer += (segundos);
-  lapTimer += (":");
-  lapTimer += (centesimos);
-  /*
-  Serial.print(lapTimer);
-  Serial.print(".           diff ");
-  Serial.print(diff);
-  Serial.print(".           Inicial ");
-  Serial.println(Imillis);*/
-  return (lapTimer.substring(0, 7));
-}
 //////////////////////////////////////////////////////////////////////////////////////
 // FUNCION ENCARGADA DE CONTAR LOS PULSOS CADA VEZ QUE SE PRODUCE UNA INTERRUPCION  //
 //////////////////////////////////////////////////////////////////////////////////////
@@ -226,7 +198,7 @@ void optionClick() {
       lastDebounceTime = millis();
     }
   }
-  if ((option >= 10) || (option <= 0))
+  if ((option >= 2) || (option <= 0))
     option = 0;
   Serial.print("option = ");
   Serial.print(option);
