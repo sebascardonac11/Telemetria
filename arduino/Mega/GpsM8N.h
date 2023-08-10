@@ -1,8 +1,10 @@
+#include "WString.h"
 #include "HardwareSerial.h"
 /**
  */
 #include <SoftwareSerial.h>
-#include <TinyGPS.h>
+
+#include "TinyGPS++.h"
 
 class Gps {
 private:
@@ -10,7 +12,7 @@ private:
   byte txPin = 10;
   byte rxPin = 9;
   SoftwareSerial ss;
-  TinyGPS gps;
+  TinyGPSPlus gps;
   float flat, flon, speed;
   int sat = -2;
   char date[32] = "00000000000000000000000000000000";
@@ -37,21 +39,22 @@ public:
   int readGps() {
     bool newData = false;
     unsigned long chars;
-    unsigned short sentences, failed;
     // For one second we parse GPS data and report some key values
     for (unsigned long start = millis(); millis() - start < 500;) {
       while (ss.available()) {
         char c = ss.read();
         //Serial.write(c); // uncomment this line if you want to see the GPS data flowing
         if (gps.encode(c)) {  // Did a new valid sentence come in?
-          newData = true;
-          Serial.println("Datos encontrados");
+          //Serial.println(gps.charsProcessed());
+          if (gps.location.isValid()) {
+            newData = true;
+            //Serial.println("Datos encontrados");
+          }
         }
       }
     }
-    gps.stats(&chars, &sentences, &failed);
-    Serial.println(chars);
-    if (chars == 0) {
+    if (gps.charsProcessed() < 10) {
+      Serial.println(F("No GPS detected: check wiring."));
       sat = -1;
     }
     if (newData) {
@@ -59,12 +62,16 @@ public:
       int year;
 
       byte month, day, hour, minute, second, hundredths;
-      gps.f_get_position(&flat, &flon, &age);
-      sat = gps.satellites();
-      this->speed = gps.f_speed_kmph();
-      gps.crack_datetime(&year, &month, &day, &hour, &minute, &second, &hundredths, &age);
+      this->flat = gps.location.lat();
+      this->flon = gps.location.lng();
+
+      //Serial.println(String(this->flat,6));
+
+      //Serial.println(String(this->flon,6));
+      this->sat = gps.satellites.value();
+      this->speed = gps.speed.kmph();
       sprintf(this->date, "%02d/%02d/%02d %02d:%02d:%02d   ",
-              month, day, year, hour, minute, second);
+              gps.date.month(), gps.date.day(), gps.date.year(), gps.time.hour(), gps.time.minute(), gps.time.second());
       //      Serial.println(this->date);
 
       this->date2 = this->date;
@@ -87,11 +94,16 @@ public:
   int getSatellite() {
     return this->sat;
   }
-  float getDistance(float lat, float lon) {
-    if (this->sat >= 0)
-      return (TinyGPS::distance_between(this->flat, this->flon, lat, lon));
-
-    else
+  /**
+  * Distance in meters
+  */
+  float getDistance(float lon,float lat) {
+    if (this->sat >= 0){
+      double distance=TinyGPSPlus::distanceBetween(
+        this->flat, this->flon,
+        lat, lon);
+      return distance;
+    }else
       return 0.0;
   }
 };

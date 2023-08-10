@@ -3,16 +3,31 @@ private:
   String name;
   float startLong, startLat;
   float endLong, endLat;
-  int width;
+  float width;
 
 public:
-  Track(String name, float startLong, float startLat, float endLong, float endLat, int width) {
+  Track() {
+  }
+  Track(String name, float startLong, float startLat, int width) {
     this->name = name;
     this->startLong = startLong;
-    this->endLong = endLong;
     this->startLat = startLat;
-    this->endLat = endLat;
     this->width = width;
   }
-  
+  /**/
+  String getName() {
+    return this->name;
+  }
+  /**/
+  float getWidth() {
+    return this->width;
+  }
+  /**/
+  float getStartLong() {
+    return this->startLong;
+  }
+  /**/
+  float getStartLat() {
+    return this->startLat;
+  }
 };

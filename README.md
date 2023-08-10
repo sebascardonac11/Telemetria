@@ -31,3 +31,9 @@ Feature:
 - Suspention
 - Tires Temperture
 - Breake Pressure Sensor
+
+FoodPrint MEGA PRO
+https://www.snapeda.com/parts/Mega%20Pro%20Embed%20CH340G%20/%20ATmega2560/Robotdyn/view-part/?company=Independent&amp;welcome=home
+
+Guia RPMs
+https://microedu.es/Electronica/AprendiendoArduino/ContadorRPM/ContadorRPM.html

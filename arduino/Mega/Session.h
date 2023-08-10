@@ -25,7 +25,7 @@ public:
   }
   String getTime() {
     this->lapTimer();
-    return this->Time;
+    return this->Time.substring(0, 7);
   }
   /**
 
@@ -47,13 +47,13 @@ public:
       this->Time += (":");
       this->Time += (segundos);
       this->Time += (":");
-      this->Time += (centesimos);
-
+      this->Time += String(centesimos,2);
+/*
       Serial.print(this->Time);
       Serial.print(".           diff ");
       Serial.print(diff);
       Serial.print(".           Inicial ");
-      Serial.println(this->startLap);
+      Serial.println(this->startLap);*/
     }
     return (this->Time.substring(0, 7));
   }
