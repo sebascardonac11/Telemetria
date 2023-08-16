@@ -1,13 +1,19 @@
-class Lap
-{
+class Lap {
 private:
-    char fecha[20] ;
-    float time;
-    float flat, flon;
-    
+  long time;
+  long startTime;
+  long endTime;
+  String printTime;
 
 public:
-    Lap()
-    {
-    }
+  Lap(long time, long startTime, long endTime,String printTime) {
+    this->startTime = startTime;
+    this->endTime = endTime;
+    this->time = time;
+    this->printTime = printTime;
+  }
+
+  String getPrintTime() {
+    return this->printTime;
+  }
 };

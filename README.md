@@ -35,5 +35,13 @@ Feature:
 FoodPrint MEGA PRO
 https://www.snapeda.com/parts/Mega%20Pro%20Embed%20CH340G%20/%20ATmega2560/Robotdyn/view-part/?company=Independent&amp;welcome=home
 
+FoodPrint Oled
+https://github.com/pforrmi/KiCad-SSD1306-128x64/tree/master/library
+
 Guia RPMs
 https://microedu.es/Electronica/AprendiendoArduino/ContadorRPM/ContadorRPM.html
+
+GPS
+http://arduiniana.org/libraries/tinygpsplus/
+https://github.com/mikalhart/TinyGPSPlus
+

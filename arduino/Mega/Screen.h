@@ -203,4 +203,7 @@ public:
 
     display.display();  // Show initial text
   }
+  void printSession(){
+    
+  }
 };

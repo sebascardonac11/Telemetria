@@ -46,7 +46,7 @@ void setup() {
 
   screen.init();
   sd.init();
-  tracks[0] = new Track("Medellin ", -75.6056060,6.1523671 , 9);
+  tracks[0] = new Track("Medellin ", -75.6056060, 6.1523671, 9);
   tracks[1] = new Track("Manizales ", 6.1523671, -75.6056060, 9);
   tracks[2] = new Track("Tocancipa ", 6.1523671, -75.685760, 9);
   tracks[3] = new Track("Finca ", -75.685753, 5.104020, 9);
@@ -64,7 +64,7 @@ void loop() {
     enter = 0;
   }*/
   /*Logic of sessions*/
-  if (gps.getDistance(tracks[3]->getStartLong(), tracks[3]->getStartLat()) < tracks[3]->getWidth()
+  if (gps.getDistance(tracks[0]->getStartLong(), tracks[0]->getStartLat()) < tracks[0]->getWidth()
       && sat > 1
       // && gps.getSpeed() > 5.0
       && (millis() - beginLapTimer > 9000)) {
@@ -72,8 +72,6 @@ void loop() {
     session.addLap(beginLapTimer);  //Inicia Vuelta
     option = 14;
   }
-
-
   /** Menu **/
   String text = "";
   String date = "Fecha";
@@ -100,7 +98,23 @@ void loop() {
         lastScreenRefresh = millis();
       }
       break;
-    /*case (2):  //Menu Configuracion
+    case (2):  //Summary
+      sat = gps.readGps();
+      if ((millis() - lastScreenRefresh) > 500) {
+        screen.printText(session.getSummary());
+      }
+      break;
+    case (3):  // Revolutions
+      sat = gps.readGps();
+      text += "   Logitud: ";
+      text += String(gps.getLongitude(), 6);
+      text += " Latitud: ";
+      text += String(gps.getLatitude(), 6);
+
+      screen.printText(text);
+
+      break;
+        /*case (2):  //Menu Configuracion
       screen.printMenu(0);
       break;
     case (3):  //Menu Suspension
@@ -155,8 +169,8 @@ void loop() {
       screen.printText(text);
 
       break;*/
-    case (14):
-      sat = gps.readGps();
+        case (14)
+        : sat = gps.readGps();
       if ((millis() - beginLapTimer) > 5000) {
         screen.printLastLap(session.getLasLap(), session.getLap());
         option = 1;
@@ -198,7 +212,7 @@ void optionClick() {
       lastDebounceTime = millis();
     }
   }
-  if ((option >= 2) || (option <= 0))
+  if ((option >= 4) || (option <= 0))
     option = 0;
   Serial.print("option = ");
   Serial.print(option);

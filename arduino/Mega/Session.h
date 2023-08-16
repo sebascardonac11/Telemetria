@@ -7,6 +7,7 @@ class Session {
 private:
   char fecha[20];
   String trackName;
+  Lap *laps[50];
   int lap = 0;
 
   int minutos = 0;
@@ -20,6 +21,12 @@ public:
   }
 
   void addLap(long startLap) {
+    this->laps[this->lap] = new Lap(
+      (startLap - this->lastLap),
+      this->lastLap,
+      startLap,
+      printTime((startLap - this->lastLap)));
+
     this->lap++;
     this->lastLap = startLap - this->startLap;
     this->startLap = startLap;
@@ -28,28 +35,30 @@ public:
     return this->lap;
   }
   String getLasLap() {
-    return this->printTime(this->lastLap, this->startLap);
+    return this->printTime((this->startLap - this->lastLap));
   }
   String getTime() {
-    return this->printTime(this->startLap, millis());
+    if (this->lap == 0)
+      return "0:00:00";
+    else
+      return this->printTime((millis() - this->startLap));
   }
 
   /**
 
 */
-  String printTime(long startTime, long endTime) {
+  String printTime(long startTime) {
     String Time = "0:00:00";
     if (startTime != 0) {
-
       int centesimos = 0;
-      double diff = (endTime - startTime);
+      double diff = startTime;
       diff = diff / 3600000;
       int hour = diff;
-      diff = (diff - hour  ) * 60;
+      diff = (diff - hour) * 60;
       int min = diff;
-      diff = (diff-min) * 60;
+      diff = (diff - min) * 60;
       int sec = diff;
-      diff = (diff-sec) * 1000;
+      diff = (diff - sec) * 1000;
       Time = min;
       Time += (":");
       Time += (sec);
@@ -58,5 +67,13 @@ public:
     }
 
     return (Time.substring(0, 7));
+  }
+  String getSummary() {
+    String text = "";
+    for (int i = 0; i < this->lap; i++) {
+      text += this->laps[i]->getPrintTime();
+      text += " , ";
+    }
+    return text;
   }
 };
