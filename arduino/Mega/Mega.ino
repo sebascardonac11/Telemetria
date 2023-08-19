@@ -6,6 +6,7 @@
 #include "SdUnit.h"
 #include "Track.h"
 #include "Session.h"
+#include "Revolution.h"
 
 //Pins
 byte txGpsPin = 10;  // Pines Para mega es (10,9), Micro (9,8)
@@ -17,6 +18,7 @@ uint8_t pinRearlinearSuspension = A1;
 int next = 8;
 int CS_PIN = 53;
 
+//Class
 Gps gps;
 Screen screen;
 LinearSuspension FrontlinearSuspension(pinFrontlinearSuspension);
@@ -24,17 +26,17 @@ LinearSuspension RearlinearSuspension(pinRearlinearSuspension);
 SdUnit sd;
 Session session("Medellin");
 Track *tracks[9];
+Revolution rev;
+int trackNear = -1;
 
-int state = 0;
+
 int option = 0;
 int enter = 0;
 long lastDebounceTime = 0;  // the last time the button was pushed
 long lastScreenRefresh = 0;
-long lastRPMRefresh = 0;
+
 long beginLapTimer = 0;
 int sat = -2;
-
-volatile int RPMpulses = 0;  //Variable que almacena los pulsos en bujía
 
 void setup() {
   pinMode(pinTachInterrupt, INPUT_PULLUP);  // enable internal pullup for tach pin
@@ -47,9 +49,11 @@ void setup() {
   screen.init();
   sd.init();
   tracks[0] = new Track("Medellin ", -75.6056060, 6.1523671, 9);
-  tracks[1] = new Track("Manizales ", 6.1523671, -75.6056060, 9);
+  tracks[1] = new Track("Manizales ", -75.478615, 5.032166, 9);
   tracks[2] = new Track("Tocancipa ", 6.1523671, -75.685760, 9);
   tracks[3] = new Track("Finca ", -75.685753, 5.104020, 9);
+
+
 
   beginLapTimer = millis();
   attachInterrupt(digitalPinToInterrupt(pinTachInterrupt), countRPM, FALLING);
@@ -58,63 +62,64 @@ void setup() {
 
 
 void loop() {
-  /**Clicks
-  if ((millis() - lastDebounceTime) > 50000) {
-    option = 0;
-    enter = 0;
-  }*/
-  /*Logic of sessions*/
-  if (gps.getDistance(tracks[0]->getStartLong(), tracks[0]->getStartLat()) < tracks[0]->getWidth()
-      && sat > 1
-      // && gps.getSpeed() > 5.0
-      && (millis() - beginLapTimer > 9000)) {
-    beginLapTimer = millis();
-    session.addLap(beginLapTimer);  //Inicia Vuelta
-    option = 14;
-  }
+  defaultMenu();
+
   /** Menu **/
-  String text = "";
-  String date = "Fecha";
   int selected = option - 3;
+  screenMenu(option);
+}
+/*////////////////////////////////////////////////////////////////////////////////////*/
+/*/ Function that works with the screen  /*/
+/*////////////////////////////////////////////////////////////////////////////////////*/
+
+void screenMenu(int option) {
+  String text = "";
   // Menu
   switch (option) {
     case (0):  //Home
       if (sat < 0) {
         sat = gps.readGps();
-        date = gps.getDate();
         //Serial.println(date[0]);
-        screen.printHome(sat, date);
+        screen.printHome(sat, "Buscando Satelite");
         break;
       } else {
-        option = 1;
+        if (trackNear == -1) {
+          screen.printHome(sat, "Buscando Pista");
+        } else {
+          option = 1;
+        }
       }
     case (1):  //LapTimer
       sat = gps.readGps();
       if ((millis() - lastScreenRefresh) > 500) {
         text += "Distancia: ";
-        text += gps.getDistance(tracks[3]->getStartLong(), tracks[3]->getStartLat());
+        text += gps.getDistance(tracks[trackNear]->getStartLong(), tracks[trackNear]->getStartLat());
         text += "m     ";
         screen.printLaptimer(session.getTime(), String(sat), gps.getSpeed(), String(session.getLap()), text);
         lastScreenRefresh = millis();
       }
       break;
-    case (2):  //Summary
+    case (3):  //Summary
+
       sat = gps.readGps();
-      if ((millis() - lastScreenRefresh) > 500) {
-        screen.printText(session.getSummary());
+      if (sat >= 0) {
+        if ((millis() - lastScreenRefresh) > 500) {
+          screen.printText(session.getSummary());
+        }
+      } else {
+        option++;
+      }
+
+      break;
+    case (2):  // Revolutions
+      if ((millis() - rev.getLastRpmRefresh()) > rev.getRefreshInterval() ) {
+        text += " Pulsos 1/4s: ";
+        text += rev.getRPM();
+        screen.printRPMS(text);
+        rev.setLastRpmRefresh(millis());
       }
       break;
-    case (3):  // Revolutions
-      sat = gps.readGps();
-      text += "   Logitud: ";
-      text += String(gps.getLongitude(), 6);
-      text += " Latitud: ";
-      text += String(gps.getLatitude(), 6);
-
-      screen.printText(text);
-
-      break;
-        /*case (2):  //Menu Configuracion
+    /*case (2):  //Menu Configuracion
       screen.printMenu(0);
       break;
     case (3):  //Menu Suspension
@@ -148,29 +153,22 @@ void loop() {
         lastScreenRefresh = millis();
       }
       break;
-    case (8):  // Revolutions
-      text += " Pulsos cada 10s : ";
-      text += RPMpulses;
-      screen.printRPMS(text);
-      if ((millis() - lastRPMRefresh) > 10000 && (RPMpulses > 0)) {
-        //Serial.print("RMPs: ");
-        //Serial.println(getRPM());
-        RPMpulses = 0;
-        lastRPMRefresh = millis();
+    */
+    case (4):  //
+      sat = gps.readGps();
+      if (sat >= 0) {
+        text += "   Logitud: ";
+        text += String(gps.getLongitude(), 6);
+        text += " Latitud: ";
+        text += String(gps.getLatitude(), 6);
+
+        screen.printText(text);
+      } else {
+        option++;
       }
       break;
-    case (9):  // Revolutions
+    case (14):
       sat = gps.readGps();
-      text += "   Logitud: ";
-      text += String(gps.getLongitude(), 6);
-      text += " Latitud: ";
-      text += String(gps.getLatitude(), 6);
-
-      screen.printText(text);
-
-      break;*/
-        case (14)
-        : sat = gps.readGps();
       if ((millis() - beginLapTimer) > 5000) {
         screen.printLastLap(session.getLasLap(), session.getLap());
         option = 1;
@@ -178,25 +176,58 @@ void loop() {
       break;
     default:
       Serial.println("Default");
-      screen.printHome(sat, date);
+      screen.printHome(sat, "");
   }
 }
 
+/*////////////////////////////////////////////////////////////////////////////////////*/
+/*/ Funcion encargada de la pantalla que ve el usuario.   /*/
+/*////////////////////////////////////////////////////////////////////////////////////*/
+void defaultMenu() {
+  /**Clicks
+  if ((millis() - lastDebounceTime) > 50000) {
+    option = 0;
+    enter = 0;
+  }*/
+  if ((option >= 3) || (option <= 0))
+    option = 0;
+  /*Esto puede cambiar si se pone una pantalla sin GPS.*/
+  if (sat > 0) {
+    option = 1;
+    /* Search Track */
+    if (trackNear == -1) {
+      int limite = (sizeof(tracks) / sizeof(tracks[0]));
+      for (int i = 0; i < limite; i++) {
+        if (gps.getDistance(tracks[i]->getStartLong(), tracks[i]->getStartLat()) < 500) {
+          trackNear = i;
+        }
+      }
+    } else {
+      /*Logic of sessions*/
+      if (gps.getDistance(tracks[trackNear]->getStartLong(), tracks[trackNear]->getStartLat()) < tracks[trackNear]->getWidth()
+          && sat > 1
+          // && gps.getSpeed() > 5.0
+          && (millis() - beginLapTimer > 9000)) {
+        beginLapTimer = millis();
+        session.addLap(beginLapTimer);  //Inicia Vuelta
+        option = 14;
+      }
+    }
+  }
+}
 //////////////////////////////////////////////////////////////////////////////////////
 // FUNCION ENCARGADA DE CONTAR LOS PULSOS CADA VEZ QUE SE PRODUCE UNA INTERRUPCION  //
 //////////////////////////////////////////////////////////////////////////////////////
 
 void countRPM() {
-
-  RPMpulses++;
-  Serial.print("Entrando a contar RPMS.");
-  Serial.println(RPMpulses);
+  rev.addPulse();
 }
 
 /*////////////////////////////////////////////////////////////////////////////////////*/
 /*/ FUNCION ENCARGADA DE CONTAR LOS PULSOS CADA VEZ QUE SE PRODUCE UNA INTERRUPCION  /*/
 /*////////////////////////////////////////////////////////////////////////////////////*/
 void optionClick() {
+
 
   if ((millis() - lastDebounceTime) > 400) {
     Serial.print(option);
@@ -205,15 +236,14 @@ void optionClick() {
     Serial.print(" Suma ");
     enter = 0;
   } else {
-    if ((millis() - lastDebounceTime) > 200) {
+    if ((millis() - lastDebounceTime) > 100) {
       Serial.print("Doble click ");
       enter = 1;
       option--;
       lastDebounceTime = millis();
     }
   }
-  if ((option >= 4) || (option <= 0))
-    option = 0;
+
   Serial.print("option = ");
   Serial.print(option);
 
@@ -221,19 +251,6 @@ void optionClick() {
   Serial.println(enter);
 }
 
-/////////////////////////////////////////////////////
-// FUNCION ENCARGADA DE CALCULAR LAS REVILUCIONES  //
-/////////////////////////////////////////////////////
-
-int getRPM() {
-  byte cilindros = 1;
-  int refreshInterval = 250;                                                                  // milisegundos refresco                                                                      // (pulsos por revolucion = 2 * cylinders / cycles)
-  byte tiempos = 4;                                                                           // tipo motor
-  int RPM = int(RPMpulses * (60000.0 / float(refreshInterval)) * tiempos / cilindros / 2.0);  // calculate RPM
-  //int RPM = int(RPMpulses * (60000.0 / float(refreshInterval)) * 1 ); // calculate RPM
-  RPMpulses = 0;  // reset pulse count to 0
-  return RPM;
-}
 
 /*********************************************
 *** 

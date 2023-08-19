@@ -54,7 +54,7 @@ public:
       }
     //}
     if (gps.charsProcessed() < 10) {
-      Serial.println(F("No GPS detected: check wiring."));
+     // Serial.println(F("No GPS detected: check wiring."));
       sat = -1;
     }
     if (newData) {
