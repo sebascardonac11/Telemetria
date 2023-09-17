@@ -16,7 +16,7 @@ public:
     {
         int pinInCC = analogRead(this->pinIn);
         float distance = 0;
-        distance = (pinInCC - valMax) * (70.0) / (valMax - valMin);
+        distance = (pinInCC - valMax) * (100.0) / (valMax - valMin);
         distance = distance * -1;
         return distance;
     }

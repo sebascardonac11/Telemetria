@@ -1,6 +1,7 @@
 #include <Arduino.h>
 
-#include "Screen.h"
+#include "TftScreen.h"
+//#include "Screen.h"
 #include "GpsM8N.h"
 #include "LinearSuspension.h"
 #include "SdUnit.h"
@@ -8,25 +9,28 @@
 #include "Session.h"
 #include "Revolution.h"
 
+
 //Pins
 byte txGpsPin = 10;  // Pines Para mega es (10,9), Micro (9,8)
 byte rxGpsPin = 9;
-const byte pinTachInterrupt = 2;  // Interrupt 0 (digital pin 2)
+const byte pinTachInterrupt = 19;  // Interrupt 0 (digital pin 2) D19
 const byte pinMenu = 3;           // Interrupt 0 (digital pin 2)
 uint8_t pinFrontlinearSuspension = A0;
 uint8_t pinRearlinearSuspension = A1;
-int next = 8;
+int next = 2;
 int CS_PIN = 53;
 
 //Class
 Gps gps;
-Screen screen;
+//Screen screen;
 LinearSuspension FrontlinearSuspension(pinFrontlinearSuspension);
 LinearSuspension RearlinearSuspension(pinRearlinearSuspension);
 SdUnit sd;
 Session session("Medellin");
 Track *tracks[9];
 Revolution rev;
+TftScreen screen;
+
 int trackNear = -1;
 
 
@@ -41,7 +45,7 @@ int sat = -2;
 void setup() {
   pinMode(pinTachInterrupt, INPUT_PULLUP);  // enable internal pullup for tach pin
   pinMode(pinMenu, INPUT_PULLUP);           // enable internal pullup for tach pin
-  pinMode(next, INPUT);
+  pinMode(next, INPUT_PULLUP);
   pinMode(CS_PIN, OUTPUT);
 
   Serial.begin(115200);
@@ -56,8 +60,12 @@ void setup() {
 
 
   beginLapTimer = millis();
+
+   session.addLap(beginLapTimer);  //Borrar
+
   attachInterrupt(digitalPinToInterrupt(pinTachInterrupt), countRPM, FALLING);
   attachInterrupt(digitalPinToInterrupt(pinMenu), optionClick, RISING);
+    attachInterrupt(digitalPinToInterrupt(next), enterClick, RISING);
 }
 
 
@@ -67,6 +75,7 @@ void loop() {
   /** Menu **/
   int selected = option - 3;
   screenMenu(option);
+  enter=0;
 }
 /*////////////////////////////////////////////////////////////////////////////////////*/
 /*/ Function that works with the screen  /*/
@@ -91,16 +100,30 @@ void screenMenu(int option) {
       }
     case (1):  //LapTimer
       sat = gps.readGps();
-      if ((millis() - lastScreenRefresh) > 500) {
-        text += "Distancia: ";
+      //if ((millis() - lastScreenRefresh) > 100) {
         text += gps.getDistance(tracks[trackNear]->getStartLong(), tracks[trackNear]->getStartLat());
         text += "m     ";
         screen.printLaptimer(session.getTime(), String(sat), gps.getSpeed(), String(session.getLap()), text);
+       // lastScreenRefresh = millis();
+      //}
+      break;
+    case (2):  // Revolutions
+      if ((millis() - rev.getLastRpmRefresh()) > rev.getRefreshInterval()) {
+        screen.printRPMS(String(rev.getRPM()));
+        rev.setLastRpmRefresh(millis());
+      }
+      break;
+    case (3):  // Suspention
+      if ((millis() - lastScreenRefresh) > 500) {
+        text += "Delanter: ";
+        text += FrontlinearSuspension.getLinearSensorInfo();
+        text += "    Trasera: ";
+        text += RearlinearSuspension.getLinearSensorInfo();
+        screen.printSuspension(String(FrontlinearSuspension.getLinearSensorInfo()), String(RearlinearSuspension.getLinearSensorInfo()));
         lastScreenRefresh = millis();
       }
       break;
-    case (3):  //Summary
-
+    case (4):  //Summary
       sat = gps.readGps();
       if (sat >= 0) {
         if ((millis() - lastScreenRefresh) > 500) {
@@ -108,15 +131,6 @@ void screenMenu(int option) {
         }
       } else {
         option++;
-      }
-
-      break;
-    case (2):  // Revolutions
-      if ((millis() - rev.getLastRpmRefresh()) > rev.getRefreshInterval() ) {
-        text += " Pulsos 1/4s: ";
-        text += rev.getRPM();
-        screen.printRPMS(text);
-        rev.setLastRpmRefresh(millis());
       }
       break;
     /*case (2):  //Menu Configuracion
@@ -143,18 +157,8 @@ void screenMenu(int option) {
       screen.printMenu(4);
 
       break;
-    case (7):  // Suspention
-      if ((millis() - lastScreenRefresh) > 500) {
-        text += "Delanter: ";
-        text += FrontlinearSuspension.getLinearSensorInfo();
-        text += "    Trasera: ";
-        text += RearlinearSuspension.getLinearSensorInfo();
-        screen.printSuspension(text);
-        lastScreenRefresh = millis();
-      }
-      break;
     */
-    case (4):  //
+    case (5):  //
       sat = gps.readGps();
       if (sat >= 0) {
         text += "   Logitud: ";
@@ -176,7 +180,7 @@ void screenMenu(int option) {
       break;
     default:
       Serial.println("Default");
-      screen.printHome(sat, "");
+      //screen.printHome(sat, "");
   }
 }
 
@@ -189,7 +193,7 @@ void defaultMenu() {
     option = 0;
     enter = 0;
   }*/
-  if ((option >= 3) || (option <= 0))
+  if ((option >= 4) || (option <= 0))
     option = 0;
   /*Esto puede cambiar si se pone una pantalla sin GPS.*/
   if (sat > 0) {
@@ -214,12 +218,15 @@ void defaultMenu() {
       }
     }
   }
+
+
 }
 //////////////////////////////////////////////////////////////////////////////////////
 // FUNCION ENCARGADA DE CONTAR LOS PULSOS CADA VEZ QUE SE PRODUCE UNA INTERRUPCION  //
 //////////////////////////////////////////////////////////////////////////////////////
 
 void countRPM() {
+  Serial.println("Pulse");
   rev.addPulse();
 }
 
@@ -251,6 +258,13 @@ void optionClick() {
   Serial.println(enter);
 }
 
+/*////////////////////////////////////////////////////////////////////////////////////*/
+/*/ FUNCION ENCARGADA DE CONTAR LOS PULSOS CADA VEZ QUE SE PRODUCE UNA INTERRUPCION  /*/
+/*////////////////////////////////////////////////////////////////////////////////////*/
+void enterClick(){
+ Serial.println("Enter");
+ enter=1;
+}
 
 /*********************************************
 *** 
