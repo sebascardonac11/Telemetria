@@ -94,18 +94,19 @@ void screenMenu(int option) {
       } else {
         if (trackNear == -1) {
           screen.printHome(sat, "Buscando Pista");
-        } else {
-          option = 1;
+            break;
+        }else{
+          option=1;
         }
       }
     case (1):  //LapTimer
       sat = gps.readGps();
-      //if ((millis() - lastScreenRefresh) > 100) {
+      if ((millis() - lastScreenRefresh) > 250) {
         text += gps.getDistance(tracks[trackNear]->getStartLong(), tracks[trackNear]->getStartLat());
         text += "m     ";
         screen.printLaptimer(session.getTime(), String(sat), gps.getSpeed(), String(session.getLap()), text);
-       // lastScreenRefresh = millis();
-      //}
+        lastScreenRefresh = millis();
+      }
       break;
     case (2):  // Revolutions
       if ((millis() - rev.getLastRpmRefresh()) > rev.getRefreshInterval()) {
