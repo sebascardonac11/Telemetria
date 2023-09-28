@@ -4,6 +4,10 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH1106.h>
 
+/**
+*This class is develop to work with OLED srcreen 128x64
+*/
+
 class Screen {
 private:
   int flag = 10;
