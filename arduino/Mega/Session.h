@@ -43,7 +43,9 @@ public:
     else
       return this->printTime((millis() - this->startLap));
   }
-
+  void setTrackName(String track){
+    this->trackName = track;
+  }
   /**
 
 */

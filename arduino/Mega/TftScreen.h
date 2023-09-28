@@ -2,6 +2,10 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7735.h>
 
+
+/**
+This class is develop to a 1.8 TFT SPI 128x160 v1.1 screen with controller ST7735S
+*/
 class TftScreen {
   // 'logo-icon', 128x169px
 
@@ -67,7 +71,7 @@ public:
    * @param time 
    * @param text 
    */
-  void printLaptimer(String time, String sat, float speed, String laps, String date) {
+  void printLaptimer(String time, String sat, float speed, String laps, String track, String date) {
     if (this->opt != "printLaptimer") {
       this->opt = "printLaptimer";
 
@@ -82,6 +86,8 @@ public:
       tft.print("Vueltas: ");
       tft.setCursor(10, 95);
       tft.print("Fecha: ");
+      tft.setCursor(10, 110);
+      tft.print("Circuito: ");
     }
     // tft.fillRect(10, 10, 150, 25,ST7735_BLACK);
     tft.setCursor(10, 10);
@@ -98,6 +104,8 @@ public:
     tft.print(laps);
     tft.setCursor(70, 95);
     tft.print(date);
+    tft.setCursor(70, 110);
+    tft.print(track);
   }
   void printMenu(int selected) {
   }

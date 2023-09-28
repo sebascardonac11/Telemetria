@@ -1,5 +1,6 @@
 #include <Arduino.h>
 
+#include "Memory.h"
 #include "TftScreen.h"
 //#include "Screen.h"
 #include "GpsM8N.h"
@@ -14,7 +15,7 @@
 byte txGpsPin = 10;  // Pines Para mega es (10,9), Micro (9,8)
 byte rxGpsPin = 9;
 const byte pinTachInterrupt = 19;  // Interrupt 0 (digital pin 2) D19
-const byte pinMenu = 3;           // Interrupt 0 (digital pin 2)
+const byte pinMenu = 3;            // Interrupt 0 (digital pin 2)
 uint8_t pinFrontlinearSuspension = A0;
 uint8_t pinRearlinearSuspension = A1;
 int next = 2;
@@ -26,15 +27,17 @@ Gps gps;
 LinearSuspension FrontlinearSuspension(pinFrontlinearSuspension);
 LinearSuspension RearlinearSuspension(pinRearlinearSuspension);
 SdUnit sd;
-Session session("Medellin");
+Session session("Manizales");
 Track *tracks[9];
 Revolution rev;
 TftScreen screen;
+Memory memory;
 
 int trackNear = -1;
 
 
 int option = 0;
+int defOption=0;
 int enter = 0;
 long lastDebounceTime = 0;  // the last time the button was pushed
 long lastScreenRefresh = 0;
@@ -52,20 +55,20 @@ void setup() {
 
   screen.init();
   sd.init();
-  tracks[0] = new Track("Medellin ", -75.6056060, 6.1523671, 9);
-  tracks[1] = new Track("Manizales ", -75.478615, 5.032166, 9);
+  tracks[0] = new Track("Manizales ", -75.478615, 5.032166, 9);
+  tracks[1] = new Track("Medellin ",  -75.6056060, 6.1523671, 9);
   tracks[2] = new Track("Tocancipa ", 6.1523671, -75.685760, 9);
-  tracks[3] = new Track("Finca ", -75.685753, 5.104020, 9);
+  tracks[3] = new Track("Finca ",     -75.685753, 5.104020, 9);
 
 
 
   beginLapTimer = millis();
 
-   session.addLap(beginLapTimer);  //Borrar
+  session.addLap(beginLapTimer);  //Borrar
 
   attachInterrupt(digitalPinToInterrupt(pinTachInterrupt), countRPM, FALLING);
   attachInterrupt(digitalPinToInterrupt(pinMenu), optionClick, RISING);
-    attachInterrupt(digitalPinToInterrupt(next), enterClick, RISING);
+  attachInterrupt(digitalPinToInterrupt(next), enterClick, RISING);
 }
 
 
@@ -75,7 +78,7 @@ void loop() {
   /** Menu **/
   int selected = option - 3;
   screenMenu(option);
-  enter=0;
+  enter = 0;
 }
 /*////////////////////////////////////////////////////////////////////////////////////*/
 /*/ Function that works with the screen  /*/
@@ -86,25 +89,24 @@ void screenMenu(int option) {
   // Menu
   switch (option) {
     case (0):  //Home
-      if (sat < 0) {
+      if (sat <= -2) {
         sat = gps.readGps();
-        //Serial.println(date[0]);
         screen.printHome(sat, "Buscando Satelite");
         break;
       } else {
         if (trackNear == -1) {
           screen.printHome(sat, "Buscando Pista");
-            break;
-        }else{
-          option=1;
+          break;
         }
+        defOption =1;
       }
     case (1):  //LapTimer
       sat = gps.readGps();
       if ((millis() - lastScreenRefresh) > 250) {
         text += gps.getDistance(tracks[trackNear]->getStartLong(), tracks[trackNear]->getStartLat());
         text += "m     ";
-        screen.printLaptimer(session.getTime(), String(sat), gps.getSpeed(), String(session.getLap()), text);
+        screen.printLaptimer(session.getTime(), String(sat), gps.getSpeed(), String(session.getLap()), 
+        tracks[trackNear]->getName(), text);
         lastScreenRefresh = millis();
       }
       break;
@@ -189,24 +191,22 @@ void screenMenu(int option) {
 /*/ Funcion encargada de la pantalla que ve el usuario.   /*/
 /*////////////////////////////////////////////////////////////////////////////////////*/
 void defaultMenu() {
-  /**Clicks
-  if ((millis() - lastDebounceTime) > 50000) {
-    option = 0;
-    enter = 0;
-  }*/
   if ((option >= 4) || (option <= 0))
-    option = 0;
+    option = defOption;
   /*Esto puede cambiar si se pone una pantalla sin GPS.*/
-  if (sat > 0) {
-    option = 1;
+  if (sat >= 0) {
     /* Search Track */
     if (trackNear == -1) {
       int limite = (sizeof(tracks) / sizeof(tracks[0]));
+      int distance = gps.getDistance(tracks[0]->getStartLong(), tracks[0]->getStartLat());
+      trackNear =0;
       for (int i = 0; i < limite; i++) {
-        if (gps.getDistance(tracks[i]->getStartLong(), tracks[i]->getStartLat()) < 500) {
+        if ( gps.getDistance(tracks[i]->getStartLong(), tracks[i]->getStartLat()) < distance ) {
+          distance = gps.getDistance(tracks[i]->getStartLong(), tracks[i]->getStartLat());
           trackNear = i;
         }
       }
+      session.setTrackName(tracks[trackNear]->getName());
     } else {
       /*Logic of sessions*/
       if (gps.getDistance(tracks[trackNear]->getStartLong(), tracks[trackNear]->getStartLat()) < tracks[trackNear]->getWidth()
@@ -219,8 +219,6 @@ void defaultMenu() {
       }
     }
   }
-
-
 }
 //////////////////////////////////////////////////////////////////////////////////////
 // FUNCION ENCARGADA DE CONTAR LOS PULSOS CADA VEZ QUE SE PRODUCE UNA INTERRUPCION  //
@@ -262,9 +260,9 @@ void optionClick() {
 /*////////////////////////////////////////////////////////////////////////////////////*/
 /*/ FUNCION ENCARGADA DE CONTAR LOS PULSOS CADA VEZ QUE SE PRODUCE UNA INTERRUPCION  /*/
 /*////////////////////////////////////////////////////////////////////////////////////*/
-void enterClick(){
- Serial.println("Enter");
- enter=1;
+void enterClick() {
+  Serial.println("Enter");
+  enter = 1;
 }
 
 /*********************************************
