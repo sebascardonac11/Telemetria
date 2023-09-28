@@ -8,8 +8,6 @@ This class is develop to a 1.8 TFT SPI 128x160 v1.1 screen with controller ST773
 */
 class TftScreen {
   // 'logo-icon', 128x169px
-
-
 private:
   int flag = 10;
   String opt = "";
@@ -78,36 +76,46 @@ public:
       tft.fillScreen(ST77XX_BLACK);
       tft.setTextSize(1);
       tft.setTextColor(ST7735_WHITE, ST7735_BLACK);
-      tft.setCursor(10, 50);
+      tft.setCursor(0, 0);
       tft.print("Sat: ");
-      tft.setCursor(10, 65);
+      tft.setCursor(50, 0);
+      tft.print("Circuito");
+      tft.setCursor(120, 0);
+      tft.print("10:20");
+      tft.setCursor(10, 60);
       tft.print("Velocidad: ");
-      tft.setCursor(10, 80);
+      tft.setCursor(100, 60);
       tft.print("Vueltas: ");
-      tft.setCursor(10, 95);
-      tft.print("Fecha: ");
-      tft.setCursor(10, 110);
-      tft.print("Circuito: ");
+      tft.setCursor(10, 115);
+      tft.print("Info: ");
     }
-    // tft.fillRect(10, 10, 150, 25,ST7735_BLACK);
-    tft.setCursor(10, 10);
     tft.setTextColor(ST7735_WHITE, ST7735_BLACK);
+    tft.setCursor(10, 25);
     tft.setTextSize(3);
     tft.print(time);
 
-    tft.setTextSize(1);
-    tft.setCursor(70, 50);
-    tft.print(sat);
-    tft.setCursor(70, 65);
-    tft.print(speed);
-    tft.setCursor(70, 80);
+
+    tft.drawRect(100, 70, 50, 40, ST7735_WHITE);
+    tft.setCursor(115, 80);
     tft.print(laps);
-    tft.setCursor(70, 95);
-    tft.print(date);
-    tft.setCursor(70, 110);
+
+    tft.setCursor(10, 75);
+    tft.print(speed);
+
+    tft.drawLine(0, 15, tft.width(), 15, ST7735_WHITE);
+    tft.setTextSize(1);
+    tft.setCursor(25, 0);
+    tft.print(sat);
+    tft.setCursor(50, 0);
     tft.print(track);
+
+
+
+    tft.setCursor(70, 115);
+    tft.print(date);
   }
-  void printMenu(int selected) {
+  int printMenu(int selected) {
+    return 0;
   }
   void printText(String text) {
     if (this->opt != "printText") {

@@ -26,15 +26,15 @@ public:
   /**
 * Return the date saved in the address 0.
 */
-  String getHour() {
-    String hour;
+  float getHour() {
+    float hour;
     this->memory.get(10, hour);
     return hour;
   }
   /**
-* ff
+* This fuction put the hour of the engine is ON.
 */
-  void setHour(String hour) {
+  void setHour(float hour) {
     this->memory.put(10, hour);
   }
 };

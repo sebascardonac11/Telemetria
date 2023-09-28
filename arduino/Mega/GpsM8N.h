@@ -3,8 +3,13 @@
 /**
  */
 #include <SoftwareSerial.h>
-
 #include "TinyGPS++.h"
+
+/**
+This class is develop to undesrstand the information that share the M8 device, that device was setup in u-center to have refresh in 4HZ.
+
+
+*/
 
 class Gps {
 private:

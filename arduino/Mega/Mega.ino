@@ -37,10 +37,11 @@ int trackNear = -1;
 
 
 int option = 0;
-int defOption=0;
+int defOption = 0;
 int enter = 0;
 long lastDebounceTime = 0;  // the last time the button was pushed
 long lastScreenRefresh = 0;
+int menu =0;
 
 long beginLapTimer = 0;
 int sat = -2;
@@ -56,11 +57,11 @@ void setup() {
   screen.init();
   sd.init();
   tracks[0] = new Track("Manizales ", -75.478615, 5.032166, 9);
-  tracks[1] = new Track("Medellin ",  -75.6056060, 6.1523671, 9);
+  tracks[1] = new Track("Medellin ", -75.6056060, 6.1523671, 9);
   tracks[2] = new Track("Tocancipa ", 6.1523671, -75.685760, 9);
-  tracks[3] = new Track("Finca ",     -75.685753, 5.104020, 9);
+  tracks[3] = new Track("Finca ", -75.685753, 5.104020, 9);
 
-
+  memory.setHour(14.2 );
 
   beginLapTimer = millis();
 
@@ -74,7 +75,6 @@ void setup() {
 
 void loop() {
   defaultMenu();
-
   /** Menu **/
   int selected = option - 3;
   screenMenu(option);
@@ -98,15 +98,15 @@ void screenMenu(int option) {
           screen.printHome(sat, "Buscando Pista");
           break;
         }
-        defOption =1;
+        defOption = 1;
       }
     case (1):  //LapTimer
       sat = gps.readGps();
       if ((millis() - lastScreenRefresh) > 250) {
         text += gps.getDistance(tracks[trackNear]->getStartLong(), tracks[trackNear]->getStartLat());
         text += "m     ";
-        screen.printLaptimer(session.getTime(), String(sat), gps.getSpeed(), String(session.getLap()), 
-        tracks[trackNear]->getName(), text);
+        screen.printLaptimer(session.getTime(), String(sat), gps.getSpeed(), String(session.getLap()),
+                             tracks[trackNear]->getName(), text);
         lastScreenRefresh = millis();
       }
       break;
@@ -116,7 +116,14 @@ void screenMenu(int option) {
         rev.setLastRpmRefresh(millis());
       }
       break;
-    case (3):  // Suspention
+    case (3): //Menu
+      sat = gps.readGps();
+      if ((millis() - lastScreenRefresh) > 500) {
+        menu = screen.printMenu(menu);
+        lastScreenRefresh = millis();
+      }
+      break;
+    case (6):  // Suspention
       if ((millis() - lastScreenRefresh) > 500) {
         text += "Delanter: ";
         text += FrontlinearSuspension.getLinearSensorInfo();
@@ -131,6 +138,7 @@ void screenMenu(int option) {
       if (sat >= 0) {
         if ((millis() - lastScreenRefresh) > 500) {
           screen.printText(session.getSummary());
+          lastScreenRefresh = millis();
         }
       } else {
         option++;
@@ -199,9 +207,9 @@ void defaultMenu() {
     if (trackNear == -1) {
       int limite = (sizeof(tracks) / sizeof(tracks[0]));
       int distance = gps.getDistance(tracks[0]->getStartLong(), tracks[0]->getStartLat());
-      trackNear =0;
+      trackNear = 0;
       for (int i = 0; i < limite; i++) {
-        if ( gps.getDistance(tracks[i]->getStartLong(), tracks[i]->getStartLat()) < distance ) {
+        if (gps.getDistance(tracks[i]->getStartLong(), tracks[i]->getStartLat()) < distance) {
           distance = gps.getDistance(tracks[i]->getStartLong(), tracks[i]->getStartLat());
           trackNear = i;
         }
