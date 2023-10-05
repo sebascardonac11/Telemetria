@@ -47,21 +47,32 @@ public:
    * @param sat 
    * @param text 
    */
-  void printHome(int sat, String text) {
+  void printHome(int sat, float hours, String text) {
     if (this->opt != "printHome") {
       this->opt = "printHome";
-
       tft.fillScreen(ST77XX_BLACK);
+      tft.setCursor(10, 10);
+      tft.setTextColor(ST7735_WHITE);
+      tft.setTextSize(3);
+      tft.print("Sebas84");
     }
-    tft.setCursor(10, 10);
-    tft.setTextColor(ST7735_WHITE);
-    tft.setTextSize(3);
-    tft.print("Sebas84");
-
-    tft.setCursor(10, 100);
-    tft.setTextColor(ST7735_WHITE);
+    tft.setCursor(10, 50);
     tft.setTextSize(1);
+    if (sat == -1) {
+      tft.print("Verifique el GPS.");
+    } else {
+      if (sat == -2) {
+        tft.print("Buscando Satelite");
+      } else {
+        tft.print(sat);
+      }
+    }
+    tft.setCursor(10, 115);
     tft.print(text);
+    tft.setCursor(90, 115);
+    tft.print("horas:");
+    tft.setCursor(130, 115);
+    tft.print(hours);
   }
   /**
    * @brief Laps, time, satellites,
@@ -69,7 +80,7 @@ public:
    * @param time 
    * @param text 
    */
-  void printLaptimer(String time, String sat, float speed, String laps, String track, String date) {
+  void printLaptimer(String time, String sat, float speed, String laps, String track, float hours,String date, String text) {
     if (this->opt != "printLaptimer") {
       this->opt = "printLaptimer";
 
@@ -81,7 +92,7 @@ public:
       tft.setCursor(50, 0);
       tft.print("Circuito");
       tft.setCursor(120, 0);
-      tft.print("10:20");
+      tft.print(date);
       tft.setCursor(10, 60);
       tft.print("Velocidad: ");
       tft.setCursor(100, 60);
@@ -109,13 +120,41 @@ public:
     tft.setCursor(50, 0);
     tft.print(track);
 
-
-
     tft.setCursor(70, 115);
-    tft.print(date);
+    tft.print(text);
+
+    tft.setCursor(130, 115);
+    tft.print(hours);
   }
   int printMenu(int selected) {
-    return 0;
+    if (this->opt != "menu") {
+      this->opt = "menu";
+      tft.fillScreen(ST77XX_BLACK);
+      tft.setTextSize(3);
+      tft.setTextColor(ST7735_WHITE, ST7735_BLACK);
+      tft.setCursor((tft.width() / 2) - 40, 0);
+      tft.print("Menu ");
+      tft.setTextSize(2);
+    }
+    tft.setCursor(10, 30);
+    tft.print("  Suspension");
+    tft.setCursor(10, 50);
+    tft.print("  Rpms");
+    switch (selected) {
+      case (0):  //Suspension
+        tft.setCursor(10, 30);
+        tft.print("> Suspension");
+        break;
+      case (1):
+        tft.setCursor(10, 50);
+        tft.print("> Rpms");
+        break;
+    }
+    if (selected > 1) {
+      return -1;
+    } else {
+      return selected;
+    }
   }
   void printText(String text) {
     if (this->opt != "printText") {
@@ -148,7 +187,7 @@ public:
   }
   void printRPMS(String rpm) {
     if (this->opt != "printRPMS") {
-      this->flag = 0;
+     // this->flag = 0;
       this->opt = "printRPMS";
 
       tft.fillScreen(ST77XX_BLACK);
@@ -157,12 +196,12 @@ public:
       tft.setTextSize(3);
       tft.print("RPMS");
     }
-    this->flag++;
+   // this->flag++;
 
     tft.setCursor(100, 100);
     tft.setTextColor(ST7735_WHITE, ST7735_BLACK);
     tft.setTextSize(2);
-    tft.print(this->flag);
+    tft.print(rpm);
   }
   void printLastLap(String time, int lap) {
     if (this->opt != "printLastLap") {

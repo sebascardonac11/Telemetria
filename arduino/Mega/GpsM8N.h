@@ -2,6 +2,7 @@
 #include "HardwareSerial.h"
 /**
  */
+#include <TimeLib.h>
 #include <SoftwareSerial.h>
 #include "TinyGPS++.h"
 
@@ -46,20 +47,20 @@ public:
     unsigned long chars;
     // For one second we parse GPS data and report some key values
     //for (unsigned long start = millis(); millis() - start < 500;) {
-      while (ss.available()) {
-        char c = ss.read();
-        //Serial.write(c); // uncomment this line if you want to see the GPS data flowing
-        if (gps.encode(c)) {  // Did a new valid sentence come in?
-          //Serial.println(gps.charsProcessed());
-          if (gps.location.isValid()) {
-            newData = true;
-            //Serial.println("Datos encontrados");
-          }
+    while (ss.available()) {
+      char c = ss.read();
+      //Serial.write(c); // uncomment this line if you want to see the GPS data flowing
+      if (gps.encode(c)) {  // Did a new valid sentence come in?
+        //Serial.println(gps.charsProcessed());
+        if (gps.location.isValid()) {
+          newData = true;
+          //Serial.println("Datos encontrados");
         }
       }
+    }
     //}
     if (gps.charsProcessed() < 10) {
-     // Serial.println(F("No GPS detected: check wiring."));
+      // Serial.println(F("No GPS detected: check wiring."));
       sat = -1;
     }
     if (newData) {
@@ -80,6 +81,8 @@ public:
       //      Serial.println(this->date);
 
       this->date2 = this->date;
+
+      setTime(gps.time.hour(), gps.time.minute(), gps.time.second(), gps.date.day(), gps.date.month(), gps.date.year());
     }
     return sat;
   }
@@ -89,6 +92,13 @@ public:
   }
   String getDate() {
     return this->date2;
+  }
+  String getTime() {
+    String time = "";
+    time += hour();
+    time += ":";
+    time += minute();
+    return time;
   }
   float getLongitude() {
     return this->flon;
@@ -102,13 +112,13 @@ public:
   /**
   * Distance in meters
   */
-  float getDistance(float lon,float lat) {
-    if (this->sat >= 0){
-      double distance=TinyGPSPlus::distanceBetween(
+  float getDistance(float lon, float lat) {
+    if (this->sat >= 0) {
+      double distance = TinyGPSPlus::distanceBetween(
         this->flat, this->flon,
         lat, lon);
       return distance;
-    }else
+    } else
       return 0.0;
   }
 };
