@@ -23,6 +23,7 @@ private:
   int sat = -2;
   char date[32] = "00000000000000000000000000000000";
   String date2 = "";
+  int UTC = -5;
 
   void init() {
     this->ss.begin(9600);
@@ -81,8 +82,8 @@ public:
       //      Serial.println(this->date);
 
       this->date2 = this->date;
-
-      setTime(gps.time.hour(), gps.time.minute(), gps.time.second(), gps.date.day(), gps.date.month(), gps.date.year());
+      
+      setTime((gps.time.hour()+this->UTC), gps.time.minute(), gps.time.second(), gps.date.day(), gps.date.month(), gps.date.year());
     }
     return sat;
   }

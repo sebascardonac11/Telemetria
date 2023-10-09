@@ -206,7 +206,21 @@ public:
   void printLastLap(String time, int lap) {
     if (this->opt != "printLastLap") {
       this->opt = "printLastLap";
+      tft.fillScreen(ST77XX_BLACK);
+      tft.setCursor(10, 10);
+      tft.setTextColor(ST7735_WHITE, ST7735_BLACK);
+      tft.setTextSize(2);
+      tft.print("Resumen");
     }
+
+    tft.setCursor(10, 60);
+    tft.setTextColor(ST7735_WHITE, ST7735_BLACK);
+    tft.setTextSize(2);
+    tft.print(time);
+     tft.setCursor(10, 100);
+    tft.setTextColor(ST7735_WHITE, ST7735_BLACK);
+    tft.setTextSize(2);
+    tft.print(lap);
   }
   void printSession() {
   }

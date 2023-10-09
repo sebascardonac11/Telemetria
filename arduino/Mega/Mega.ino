@@ -59,7 +59,7 @@ void setup() {
   screen.init();
   sd.init();
   tracks[0] = new Track("Manizales ", -75.478615, 5.032166, 9);
-  tracks[1] = new Track("Medellin ", -75.60573033, 6.15239417, 9);
+  tracks[1] = new Track("Medellin ", -75.60573033, 6.15239417, 15);
   tracks[2] = new Track("Tocancipa ", 6.1523671, -75.685760, 9);
   tracks[3] = new Track("Finca ", -75.685753, 5.104020, 9);
 
@@ -90,10 +90,10 @@ void loop() {
 /*/ Function that works with the screen  /*/
 /*////////////////////////////////////////////////////////////////////////////////////*/
 
-void screenMenu(int option) {
+void screenMenu(int ScreenOption) {
   String text = "";
   // Menu
-  switch (option) {
+  switch (ScreenOption) {
     case (0):  //Home
       sat = gps.readGps();
       if (sat < 0) {
@@ -169,9 +169,10 @@ void screenMenu(int option) {
       break;
     case (14):
       sat = gps.readGps();
-      if ((millis() - beginLapTimer) > 5000) {
-        screen.printLastLap(session.getLasLap(), session.getLap());
-        option = 1;
+      if ( (millis() - beginLapTimer) > 5000) {
+       option = defOption;
+      }else{
+         screen.printLastLap(session.getLasLap(), session.getLap());
       }
       break;
     default:
@@ -184,11 +185,13 @@ void screenMenu(int option) {
 /*/ Funcion encargada de la pantalla que ve el usuario.   /*/
 /*////////////////////////////////////////////////////////////////////////////////////*/
 void defaultMenu() {
+  //Logic to screens.
   if (((option >= 3) || (option <= 0) || (menu == -1)) && (option <= 9))
     option = defOption;
-  /*Esto puede cambiar si se pone una pantalla sin GPS.*/
+
+  //Logic to find a track
   if (sat >= 0) {
-    Serial.println(gps.getDate());  //10/04/2023 19:12:19
+    //Serial.println(gps.getDate());  //10/04/2023 19:12:19
     /* Search Track */
     if (trackNear == -1) {
       int limite = (sizeof(tracks) / sizeof(tracks[0]));
