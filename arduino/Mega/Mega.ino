@@ -172,7 +172,8 @@ void screenMenu(int ScreenOption) {
       if ( (millis() - beginLapTimer) > 5000) {
        option = defOption;
       }else{
-         screen.printLastLap(session.getLasLap(), session.getLap());
+         screen.printLastLap(session.getLastLap(), session.getLap());
+         Serial.println(session.getLastLap());
       }
       break;
     default:

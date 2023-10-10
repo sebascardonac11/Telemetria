@@ -26,16 +26,15 @@ public:
       this->lastLap,
       startLap,
       printTime((startLap - this->lastLap)));
-
-    this->lap++;
     this->lastLap = startLap - this->startLap;
     this->startLap = startLap;
+    this->lap++;
   }
   int getLap() {
     return this->lap;
   }
-  String getLasLap() {
-    return this->printTime((this->startLap - this->lastLap));
+  String getLastLap() {
+    return this->printTime( this->lastLap);
   }
   String getTime() {
     if (this->lap == 0)
@@ -43,7 +42,7 @@ public:
     else
       return this->printTime((millis() - this->startLap));
   }
-  void setTrackName(String track){
+  void setTrackName(String track) {
     this->trackName = track;
   }
   /**

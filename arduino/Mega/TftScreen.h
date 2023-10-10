@@ -55,6 +55,9 @@ public:
       tft.setTextColor(ST7735_WHITE);
       tft.setTextSize(3);
       tft.print("Sebas84");
+      tft.setTextSize(1);
+      tft.setCursor(90, 115);
+      tft.print("@sebascardonac11");
     }
     tft.setCursor(10, 50);
     tft.setTextSize(1);
@@ -80,7 +83,7 @@ public:
    * @param time 
    * @param text 
    */
-  void printLaptimer(String time, String sat, float speed, String laps, String track, float hours,String date, String text) {
+  void printLaptimer(String time, String sat, float speed, String laps, String track, float hours, String date, String text) {
     if (this->opt != "printLaptimer") {
       this->opt = "printLaptimer";
 
@@ -187,7 +190,7 @@ public:
   }
   void printRPMS(String rpm) {
     if (this->opt != "printRPMS") {
-     // this->flag = 0;
+      // this->flag = 0;
       this->opt = "printRPMS";
 
       tft.fillScreen(ST77XX_BLACK);
@@ -196,7 +199,7 @@ public:
       tft.setTextSize(3);
       tft.print("RPMS");
     }
-   // this->flag++;
+    // this->flag++;
 
     tft.setCursor(100, 100);
     tft.setTextColor(ST7735_WHITE, ST7735_BLACK);
@@ -217,7 +220,7 @@ public:
     tft.setTextColor(ST7735_WHITE, ST7735_BLACK);
     tft.setTextSize(2);
     tft.print(time);
-     tft.setCursor(10, 100);
+    tft.setCursor(10, 100);
     tft.setTextColor(ST7735_WHITE, ST7735_BLACK);
     tft.setTextSize(2);
     tft.print(lap);
